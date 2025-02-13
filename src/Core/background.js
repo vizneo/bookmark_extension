@@ -1,8 +1,10 @@
 /* eslint-disable no-undef */
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+const browser = window.browser || window.browser;
+
+browser.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
   if (request.action === "save_tabs") {
     try {
-      let tabs = await chrome.tabs.query({ currentWindow: true });
+      let tabs = await browser.tabs.query({ currentWindow: true });
 
       let tabUrls = tabs.map((tab) => ({ title: tab.title, url: tab.url }));
 
@@ -15,18 +17,18 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
         let now = new Date();
         let fileName = `tabs_${now.toISOString().replace(/[:.]/g, "-")}.json`;
         let base64Data = reader.result.split(",")[1];
-        chrome.downloads
+        browser.downloads
           .download({
             url: `data:application/json;base64,${base64Data}`,
             filename: fileName,
             saveAs: true,
           })
           .then((response) => {
-            if (chrome.runtime.lastError) {
-              console.error(chrome.runtime.lastError.message);
+            if (browser.runtime.lastError) {
+              console.error(browser.runtime.lastError.message);
               sendResponse({
                 success: false,
-                error: chrome.runtime.lastError.message,
+                error: browser.runtime.lastError.message,
               });
             } else {
               console.log(`Download started with ID: ${response}`);
@@ -51,12 +53,12 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
       if (urlList.length > 5) {
         console.log("Too many tabs stored. Limiting to last 3");
         const slicedArray = urlList.slice(3, urlList.length);
-        await chrome.windows.create({ url: slicedArray });
+        await browser.windows.create({ url: slicedArray });
         console.log(response.sessionId);
         sendResponse({ success: true, sessionId: response.sessionId });
       } else {
         // Open a new window with all the URLs as separate tabs
-        await chrome.windows.create({ url: urlList });
+        await browser.windows.create({ url: urlList });
         console.log(response.sessionId);
         sendResponse({ success: true, sessionId: response.sessionId });
       }

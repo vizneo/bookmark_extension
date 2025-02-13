@@ -80,7 +80,7 @@ jobs:
       - name: Build React App for Firefox
         run: npm run build-firefox
 
-      - name: Build React App for Firefox
+      - name: Build React App for Chrome
         run: npm run build-chrome
 
       # Upload Build artifact for default config.
