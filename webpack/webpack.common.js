@@ -6,7 +6,8 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 module.exports = {
   entry: {
     main: "./src/index.js",
-    background: "./src/Core/background.js", // New entry point for background script
+    background: "./src/Core/background.js",
+    "group-view": "./src/group-view.js", // Entry point for group view page
   },
   output: {
     filename: "[name].js",
@@ -55,6 +56,7 @@ module.exports = {
       patterns: [
         { from: "src/images", to: "images" },
         { from: "public/manifest.json", to: "manifest.json" },
+        { from: "public/group-view.html", to: "group-view.html" },
       ],
     }),
   ],

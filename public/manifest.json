@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Save Tabs as JSON",
-  "description": "A browser action with a popup dump of all bookmarks, including search, add, edit and delete.",
-  "version": "0.2",
+  "name": "Tab Manager - OneTab Alternative",
+  "description": "Manage browser tabs with persistent storage, groups, and one-click operations. Save, organize, and restore tabs easily.",
+  "version": "1.0.0",
   "permissions": ["bookmarks", "tabs", "downloads", "storage"],
   "background": {
     "service_worker": "background.js"

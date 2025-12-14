@@ -5,8 +5,9 @@ import "./NavbarComponent.css";
 import RestoreSessionComponent from "../Pages/RestoreSession/RestoreSessionComponent";
 import SaveTabsComponent from "../Pages/SaveTabs/SaveTabsComponent";
 import AboutComponent from "../Pages/About/AboutComponent";
+import TabGroupList from "../Pages/TabGroups/TabGroupList";
 const NavbarComponent = () => {
-  const [activeTab, setActiveTab] = useState("home");
+  const [activeTab, setActiveTab] = useState("groups");
 
   return (
     <Container className="navbar">
@@ -20,18 +21,25 @@ const NavbarComponent = () => {
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="me-auto">
               <Nav.Link
-                href="#home"
-                active={activeTab === "save"}
-                onClick={() => setActiveTab("save")}
+                href="#groups"
+                active={activeTab === "groups"}
+                onClick={() => setActiveTab("groups")}
               >
-                Save
+                My Groups
               </Nav.Link>
               <Nav.Link
-                href="#profile"
-                active={activeTab === "restore"}
-                onClick={() => setActiveTab("restore")}
+                href="#legacy"
+                active={activeTab === "legacy"}
+                onClick={() => setActiveTab("legacy")}
               >
-                Restore
+                Legacy
+              </Nav.Link>
+              <Nav.Link
+                href="#about"
+                active={activeTab === "about"}
+                onClick={() => setActiveTab("about")}
+              >
+                About
               </Nav.Link>
             </Nav>
           </Navbar.Collapse>
@@ -40,19 +48,22 @@ const NavbarComponent = () => {
 
       {/* Content */}
       <Container className="mt-4">
-        {activeTab === "home" && (
+        {activeTab === "groups" && (
+          <>
+            <TabGroupList />
+          </>
+        )}
+        {activeTab === "legacy" && (
+          <>
+            <h4>Legacy File-Based Operations</h4>
+            <SaveTabsComponent />
+            <hr className="my-4" />
+            <RestoreSessionComponent />
+          </>
+        )}
+        {activeTab === "about" && (
           <>
             <AboutComponent />
-          </>
-        )}
-        {activeTab === "save" && (
-          <>
-            <SaveTabsComponent />
-          </>
-        )}
-        {activeTab === "restore" && (
-          <>
-            <RestoreSessionComponent />
           </>
         )}
       </Container>

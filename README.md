@@ -19,7 +19,7 @@ The current implementation is only in the development stage and requires the fol
 0. **Clone**: Clone the repository (with HTTPS)
 
 ```bash
-git clone https://github.com/motethansen/bookmark_extension
+git clone git@github.com:vizneo/bookmark_extension.git
 ```
 
 1. **Download Node.js**: Download the latest version of [Node.js](https://nodejs.org/en/download/package-manager) and Node Package Manager (NPM)
@@ -92,7 +92,7 @@ For major changes, please open an issue first to discuss what you would like to 
 
 If you have any issues or questions:
 
-- **Report Bugs**: Use the [GitHub issue tracker](https://github.com/motethansen/bookmark_extension/issues) to report any problems or feature requests.
+- **Report Bugs**: Use the [GitHub issue tracker](https://github.com/vizneo/bookmark_extension.git/issues) to report any problems or feature requests.
 
 ---
 

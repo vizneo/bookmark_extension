@@ -20,7 +20,7 @@ function FileUploadParent() {
           } else if (response && !response.success) {
             console.error(response.error);
           } else {
-            console.log("Session Restored Successfully.");
+            console.log("Session Restored Successfully (Legacy Mode).");
             setFiles([]);
             setFileContent("");
           }
@@ -28,6 +28,29 @@ function FileUploadParent() {
       // Additional code to process the JSON data
     } catch (error) {
       console.error("Error parsing JSON:", error);
+    }
+  };
+
+  const importToStorageClick = () => {
+    try {
+      const jsonData = JSON.parse(fileContent);
+      chrome.runtime
+        .sendMessage({ action: "import_groups", data: jsonData, mergeWithExisting: true })
+        .then((response) => {
+          if (chrome.runtime.lastError) {
+            console.error(chrome.runtime.lastError.message);
+          } else if (response && !response.success) {
+            console.error(response.error);
+          } else {
+            console.log("Groups imported successfully.");
+            alert("Groups imported! Go to 'My Groups' tab to see them.");
+            setFiles([]);
+            setFileContent("");
+          }
+        });
+    } catch (error) {
+      console.error("Error parsing JSON:", error);
+      alert("Invalid JSON file. Please check the file format.");
     }
   };
 
@@ -55,15 +78,27 @@ function FileUploadParent() {
 
   return (
     <div>
-      <h2>Restore Session from JSON</h2>
+      <h2>Import from JSON File</h2>
       <FilePondComponent files={files} onFileUpdate={handleFileUpdate} />
-      <Button
-        onClick={restoreSessionClick}
-        style={{ alignContent: "center", bottom: 0 }}
-        className="primary"
-      >
-        Restore Session
-      </Button>
+      <div style={{ display: "flex", gap: "10px", marginTop: "10px" }}>
+        <Button
+          onClick={importToStorageClick}
+          variant="primary"
+          disabled={!fileContent}
+        >
+          Import to Storage (Recommended)
+        </Button>
+        <Button
+          onClick={restoreSessionClick}
+          variant="secondary"
+          disabled={!fileContent}
+        >
+          Open Tabs Directly (Legacy)
+        </Button>
+      </div>
+      <small className="text-muted d-block mt-2">
+        Import to storage adds groups to your saved collection. Open directly creates tabs immediately.
+      </small>
     </div>
   );
 }

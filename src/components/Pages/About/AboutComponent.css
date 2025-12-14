@@ -1,3 +1,17 @@
-.text {
-  text-align: center;
+.about-page {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.about-page h1 {
+  font-size: 28px;
+  margin-bottom: 8px;
+}
+
+.about-page ul {
+  padding-left: 20px;
+}
+
+.about-page li {
+  margin-bottom: 8px;
 }
