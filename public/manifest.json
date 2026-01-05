@@ -3,6 +3,12 @@
   "name": "Tab Manager - OneTab Alternative",
   "description": "Manage browser tabs with persistent storage, groups, and one-click operations. Save, organize, and restore tabs easily.",
   "version": "1.0.0",
+  "author": "MyBookmarkSession",
+  "icons": {
+    "16": "images/icon16.png",
+    "48": "images/icon48.png",
+    "128": "images/icon128.png"
+  },
   "permissions": ["bookmarks", "tabs", "downloads", "storage"],
   "background": {
     "service_worker": "background.js"
