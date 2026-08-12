@@ -23,7 +23,8 @@ global.chrome = {
     lastError: undefined,
     sendMessage: jest.fn(),
     getManifest: () => ({ version: "1.0.0" }),
-    getURL: (path) => `chrome-extension://vtabs-test/${path.replace(/^\//, "")}`,
+    getURL: (path) =>
+      `chrome-extension://vtabs-test/${path.replace(/^\//, "")}`,
   },
   storage: { local: createStorageArea() },
   tabs: {

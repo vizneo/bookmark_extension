@@ -21,7 +21,9 @@ const TabGroupItem = ({ group, onChanged, onError }) => {
 
   const openGroupView = () => {
     chrome.tabs.create({
-      url: chrome.runtime.getURL(`group-view.html?id=${encodeURIComponent(group.id)}`),
+      url: chrome.runtime.getURL(
+        `group-view.html?id=${encodeURIComponent(group.id)}`,
+      ),
     });
   };
 
@@ -34,12 +36,16 @@ const TabGroupItem = ({ group, onChanged, onError }) => {
     }
     run(
       { action: "restore_tab_group", groupId: group.id, deleteAfterRestore },
-      { refresh: deleteAfterRestore }
+      { refresh: deleteAfterRestore },
     );
   };
 
   const handleDelete = () => {
-    if (!window.confirm(`Delete “${group.name}” and all ${group.tabs.length} tabs?`)) {
+    if (
+      !window.confirm(
+        `Delete “${group.name}” and all ${group.tabs.length} tabs?`,
+      )
+    ) {
       return;
     }
     run({ action: "delete_tab_group", groupId: group.id }, { refresh: true });
@@ -55,7 +61,7 @@ const TabGroupItem = ({ group, onChanged, onError }) => {
     }
     run(
       { action: "update_group_name", groupId: group.id, newName: name },
-      { refresh: true }
+      { refresh: true },
     );
   };
 
@@ -96,13 +102,25 @@ const TabGroupItem = ({ group, onChanged, onError }) => {
         <Button size="sm" variant="outline-primary" onClick={openGroupView}>
           View tabs
         </Button>
-        <Button size="sm" variant="primary" onClick={() => handleRestoreAll(false)}>
+        <Button
+          size="sm"
+          variant="primary"
+          onClick={() => handleRestoreAll(false)}
+        >
           Open all
         </Button>
-        <Button size="sm" variant="outline-secondary" onClick={() => handleRestoreAll(true)}>
+        <Button
+          size="sm"
+          variant="outline-secondary"
+          onClick={() => handleRestoreAll(true)}
+        >
           Open &amp; remove
         </Button>
-        <Button size="sm" variant="outline-secondary" onClick={() => setIsEditing(true)}>
+        <Button
+          size="sm"
+          variant="outline-secondary"
+          onClick={() => setIsEditing(true)}
+        >
           Rename
         </Button>
         <Button

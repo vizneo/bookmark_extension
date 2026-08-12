@@ -43,7 +43,9 @@ describe("TabGroupList", () => {
   });
 
   it("surfaces a background failure instead of failing silently", async () => {
-    respondWith({ get_all_groups: { success: false, error: "worker is asleep" } });
+    respondWith({
+      get_all_groups: { success: false, error: "worker is asleep" },
+    });
 
     render(<TabGroupList />);
 

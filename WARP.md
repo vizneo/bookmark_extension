@@ -13,10 +13,15 @@ JSON import/export moves them between browsers. There is no backend.
 ```bash
 npm ci           # install
 npm test         # jest
+npm run lint     # eslint (flat config in eslint.config.mjs)
+npm run format   # prettier --write; format:check verifies without writing
 npm run build    # production build -> build/
 npm run dev      # development build, --watch
 npm run package  # build + zip to vtabs.zip
 ```
+
+Lint and formatting are enforced in CI, so run `npm run format` before
+committing.
 
 Run a single test file: `npm test -- storage.test.js`
 

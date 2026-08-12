@@ -77,12 +77,12 @@ that single purpose.
 
 **Permission justifications** (one per requested permission):
 
-| Permission | Justification to paste |
-| --- | --- |
-| `tabs` | Reading the title and URL of each tab in the current window is how a session is saved, and reopening those URLs is how it is restored. There is no way to save a tab session without them. |
-| `storage` | Saved tab groups are kept in chrome.storage.local so they survive browser restarts. This is the extension's only data store. |
-| `downloads` | The Export feature writes the user's tab groups to a JSON file that the user chooses a location for. Used only when the user presses Export. |
-| `favicon` | Site icons shown next to each saved tab are read from the browser's local favicon cache. This replaced a third-party icon service so that no browsing data leaves the device. |
+| Permission  | Justification to paste                                                                                                                                                                     |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `tabs`      | Reading the title and URL of each tab in the current window is how a session is saved, and reopening those URLs is how it is restored. There is no way to save a tab session without them. |
+| `storage`   | Saved tab groups are kept in chrome.storage.local so they survive browser restarts. This is the extension's only data store.                                                               |
+| `downloads` | The Export feature writes the user's tab groups to a JSON file that the user chooses a location for. Used only when the user presses Export.                                               |
+| `favicon`   | Site icons shown next to each saved tab are read from the browser's local favicon cache. This replaced a third-party icon service so that no browsing data leaves the device.              |
 
 **Host permissions:** none requested.
 
@@ -99,7 +99,7 @@ CSS is bundled in the package.
 - [ ] Authentication information
 - [ ] Personal communications
 - [ ] Location
-- [ ] Web history — *not* ticked: vTabs records only the tabs the user chooses
+- [ ] Web history — _not_ ticked: vTabs records only the tabs the user chooses
       to save, and never observes navigation.
 - [ ] User activity
 - [x] I do not sell or transfer user data to third parties
@@ -153,12 +153,12 @@ Icons at 16/48/128 already ship in `src/images/`.
 
 **Repository secrets needed for the automated upload:**
 
-| Secret | Where it comes from |
-| --- | --- |
-| `CWS_EXTENSION_ID` | The item ID, visible in the dashboard URL after the first manual upload |
-| `CWS_CLIENT_ID` | Google Cloud OAuth client (Chrome Web Store API enabled) |
-| `CWS_CLIENT_SECRET` | Same OAuth client |
-| `CWS_REFRESH_TOKEN` | Generated once against that client |
+| Secret              | Where it comes from                                                     |
+| ------------------- | ----------------------------------------------------------------------- |
+| `CWS_EXTENSION_ID`  | The item ID, visible in the dashboard URL after the first manual upload |
+| `CWS_CLIENT_ID`     | Google Cloud OAuth client (Chrome Web Store API enabled)                |
+| `CWS_CLIENT_SECRET` | Same OAuth client                                                       |
+| `CWS_REFRESH_TOKEN` | Generated once against that client                                      |
 
 Without them the release job still runs and attaches the zip to the GitHub
 release; only the store upload step is skipped.
