@@ -1,54 +1,56 @@
 {
-  "name": "bookmark_extension_v2",
-  "version": "0.1.0",
+  "name": "vtabs",
+  "version": "1.0.0",
+  "description": "Save, organize, and restore browser tab sessions. Chrome MV3 extension.",
   "private": true,
+  "license": "AGPL-3.0-or-later",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vizneo/bookmark_extension.git"
+  },
   "dependencies": {
-    "@testing-library/jest-dom": "^5.17.0",
-    "@testing-library/react": "^13.4.0",
-    "@testing-library/user-event": "^13.5.0",
     "bootstrap": "^5.3.3",
-    "filepond": "^4.32.1",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.5",
-    "react-dnd": "^16.0.1",
-    "react-dnd-html5-backend": "^16.0.1",
-    "react-dom": "^18.3.1",
-    "react-filepond": "^7.1.2",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
+    "react-dom": "^18.3.1"
   },
   "scripts": {
     "start": "webpack serve --config webpack/webpack.dev.js",
     "build": "webpack --config webpack/webpack.prod.js",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "package": "npm run build && cd build && zip -r -FS ../vtabs.zip . -x '*.map'",
+    "test": "jest"
   },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
+  "jest": {
+    "testEnvironment": "jsdom",
+    "setupFilesAfterEnv": [
+      "<rootDir>/config/jest/setupTests.js"
     ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
+    "moduleNameMapper": {
+      "\\.(css|less|scss)$": "<rootDir>/config/jest/styleMock.js",
+      "\\.(png|jpe?g|gif|svg|ico)$": "<rootDir>/config/jest/fileMock.js"
+    },
+    "testMatch": [
+      "<rootDir>/src/**/*.test.js"
     ]
   },
+  "browserslist": [
+    "chrome >= 104"
+  ],
   "devDependencies": {
     "@babel/core": "^7.26.0",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.25.9",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "babel-jest": "^29.7.0",
     "babel-loader": "^9.2.1",
     "copy-webpack-plugin": "^12.0.2",
+    "css-loader": "^7.1.2",
     "html-webpack-plugin": "^5.6.3",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "mini-css-extract-plugin": "^2.9.2",
     "react-refresh": "^0.14.2",
     "webpack": "^5.96.0",
     "webpack-cli": "^5.1.4",

@@ -1,9 +1,0 @@
-.draganddrop {
-  display: block;
-  min-height: 200px;
-  min-width: 100%;
-  align-items: center;
-  border: 5px dashed white;
-  background-color: black;
-  padding: 30px;
-}

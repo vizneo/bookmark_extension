@@ -1,73 +1,44 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Navbar, Nav, Container } from "react-bootstrap";
 import logo from "../../images/icon48.png";
 import "./NavbarComponent.css";
-import RestoreSessionComponent from "../Pages/RestoreSession/RestoreSessionComponent";
-import SaveTabsComponent from "../Pages/SaveTabs/SaveTabsComponent";
 import AboutComponent from "../Pages/About/AboutComponent";
 import TabGroupList from "../Pages/TabGroups/TabGroupList";
+
 const NavbarComponent = () => {
   const [activeTab, setActiveTab] = useState("groups");
 
   return (
-    <Container className="navbar">
-      {/* Navbar */}
-      <Navbar collapseOnSelect bg="light" expand="xs">
+    <>
+      <Navbar bg="light" className="app-navbar">
         <Container>
-          <Navbar.Brand onClick={() => setActiveTab("home")} href="#home">
-            <img src={logo} className="App-logo" alt="logo" />
+          <Navbar.Brand onClick={() => setActiveTab("groups")} role="button">
+            <img src={logo} className="app-logo" alt="" />
+            vTabs
           </Navbar.Brand>
-          <Navbar.Toggle aria-controls="basic-navbar-nav" />
-          <Navbar.Collapse id="basic-navbar-nav">
-            <Nav className="me-auto">
-              <Nav.Link
-                href="#groups"
-                active={activeTab === "groups"}
-                onClick={() => setActiveTab("groups")}
-              >
-                My Groups
-              </Nav.Link>
-              <Nav.Link
-                href="#legacy"
-                active={activeTab === "legacy"}
-                onClick={() => setActiveTab("legacy")}
-              >
-                Legacy
-              </Nav.Link>
-              <Nav.Link
-                href="#about"
-                active={activeTab === "about"}
-                onClick={() => setActiveTab("about")}
-              >
-                About
-              </Nav.Link>
-            </Nav>
-          </Navbar.Collapse>
+          {/* `as="button"` keeps these keyboard-focusable without a fragment
+              href that would navigate the popup. */}
+          <Nav className="ms-auto">
+            <Nav.Link
+              as="button"
+              active={activeTab === "groups"}
+              onClick={() => setActiveTab("groups")}
+            >
+              My Groups
+            </Nav.Link>
+            <Nav.Link
+              as="button"
+              active={activeTab === "about"}
+              onClick={() => setActiveTab("about")}
+            >
+              About
+            </Nav.Link>
+          </Nav>
         </Container>
       </Navbar>
 
-      {/* Content */}
-      <Container className="mt-4">
-        {activeTab === "groups" && (
-          <>
-            <TabGroupList />
-          </>
-        )}
-        {activeTab === "legacy" && (
-          <>
-            <h4>Legacy File-Based Operations</h4>
-            <SaveTabsComponent />
-            <hr className="my-4" />
-            <RestoreSessionComponent />
-          </>
-        )}
-        {activeTab === "about" && (
-          <>
-            <AboutComponent />
-          </>
-        )}
-      </Container>
-    </Container>
+      {activeTab === "groups" ? <TabGroupList /> : <AboutComponent />}
+    </>
   );
 };
 
