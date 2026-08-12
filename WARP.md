@@ -25,6 +25,11 @@ committing.
 
 Run a single test file: `npm test -- storage.test.js`
 
+The Jest suite mocks the `chrome` API, so it cannot exercise the service
+worker, tab manipulation, favicons or downloads. README.md has a "Testing
+locally" section with the devtools entry points and a manual checklist for
+those; use it after changing anything in `Core/background.js` or `group-view.js`.
+
 Load the extension from `chrome://extensions` → Developer mode → Load unpacked →
 select `build/`.
 
