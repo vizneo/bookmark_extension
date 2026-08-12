@@ -48,12 +48,105 @@ There is no dev server. The popup calls `chrome.*` APIs as it loads, so it only
 runs as an installed extension. Leave `npm run dev` running and press reload on
 the extension in `chrome://extensions` to pick up a change.
 
-### Loading the unpacked extension
+---
+
+## Testing locally
+
+`npm test` covers the storage layer, import validation and the popup's
+rendering against a mock `chrome` API. It cannot cover the parts that only
+exist inside a real browser — the service worker, tab manipulation, favicon
+rendering and the download flow — so changes to those need a pass by hand.
+
+### 1. Load the extension
 
 1. Run `npm run build`.
-2. Open `chrome://extensions` and enable **Developer mode**.
+2. Open `chrome://extensions` and turn on **Developer mode** (top right).
 3. Click [**Load unpacked**](./docs/loadunpacked.png) and select the `build/`
-   directory (not `public/` — the manifest is generated at build time).
+   directory — not `public/`, which has no generated manifest and will fail to
+   load.
+
+The vTabs icon appears in the toolbar. Pin it so it stays visible while you
+test.
+
+### 2. Pick up a change
+
+Leave `npm run dev` running; it rebuilds `build/` on every save. Then, on the
+extension's card in `chrome://extensions`:
+
+- press the **reload** arrow after changing `background.js`, the manifest, or
+  anything in `public/`
+- for popup or group-page changes, just close and reopen the popup or reload
+  the page
+
+If the card shows a red **Errors** button, open it first — a service worker
+that failed to parse will make every action fail with "No response from the
+background service worker."
+
+### 3. Open the right console
+
+Each part of the extension has its own devtools:
+
+| Part           | How to open it                                      |
+| -------------- | --------------------------------------------------- |
+| Service worker | The **service worker** link on the extension's card |
+| Popup          | Right-click the toolbar icon → **Inspect popup**    |
+| Group page     | It is an ordinary tab — F12                         |
+
+An MV3 service worker stops after roughly 30 seconds idle, which is normal.
+Opening its console wakes it, and any message from the UI restarts it.
+
+### 4. Inspect and reset stored data
+
+From the service worker console:
+
+```js
+await chrome.storage.local.get("tabGroups"); // read everything
+await chrome.storage.local.clear(); // wipe it and start clean
+```
+
+Wiping storage fires the change event, so an open popup empties itself as you
+watch — which doubles as a check that live updates work.
+
+### 5. Manual checklist
+
+Worth walking once before a release, and after touching anything below.
+
+**Saving**
+
+- [ ] Save without closing — the group appears, tabs stay open
+- [ ] Save **with** "close these tabs" — the window stays open on the group
+      page rather than disappearing, and the other tabs are gone
+- [ ] A pinned tab is neither saved nor closed
+- [ ] With a `chrome://` tab open, the notice reports it as skipped
+
+**Restoring**
+
+- [ ] "Open all" opens a new window with every tab
+- [ ] "Open & remove" opens them and drops the group from the list
+- [ ] From the group page, clicking one tab opens just that one
+
+**Editing**
+
+- [ ] Rename: Enter commits, Escape cancels, clicking away commits
+- [ ] Remove a tab on the group page; removing the last one deletes the group
+- [ ] Delete a group from the popup, confirm prompt and all
+- [ ] Search matches group names, tab titles and URLs
+
+**Files**
+
+- [ ] Export one group, and export all — both open a Save dialog
+- [ ] Cancelling that dialog is not reported as an error
+- [ ] Re-import the exported file; the groups come back
+- [ ] Import a file of nonsense JSON — a readable error, no crash
+- [ ] Import a legacy flat `[{title, url}]` file; it lands as one group
+
+**Live updates and privacy**
+
+- [ ] With the popup and a group page both open, delete a tab on the page —
+      the popup's counts update without being touched
+- [ ] Open devtools on the group page, reload it, and check the Network tab:
+      no requests to any external host. Favicons must come from
+      `chrome-extension://…/_favicon/`.
 
 ---
 
@@ -65,7 +158,9 @@ src/
   index.js             Popup entry (React).
   group-view.js        Full-page view of one group. Plain DOM, no framework.
   utils/
-    storage.js         The only module that touches chrome.storage.local.
+    storage.js         Writes to chrome.storage.local, serialised.
+    storageEvents.js   Subscribes to storage changes, for live updates.
+    constants.js       The storage key, shared by both of the above.
     validation.js      URL allow-list and sanitisation of imported JSON.
     messaging.js       Promise wrapper over chrome.runtime.sendMessage.
     favicon.js         Local favicon URLs via the `favicon` permission.
@@ -74,12 +169,15 @@ webpack/               Shared / dev / prod webpack configs.
 config/jest/           Test setup and the in-memory `chrome` API mock.
 ```
 
-Two invariants worth preserving:
+Three invariants worth preserving:
 
 - **UI code never writes to storage directly.** It sends a message to the
   service worker, which is what makes the single write queue in
   `utils/storage.js` enough to prevent lost updates between the popup, the
   group page and the worker.
+- **Nothing refetches after a mutation.** State flows back out through
+  `chrome.storage.onChanged`, so every open view updates itself. A manual
+  refresh on top is a redundant round trip and a second render.
 - **Anything that came from a file is untrusted.** Imported JSON goes through
   `normalizeImport`, and URLs are checked against an allow-list before they
   reach the tabs API or the DOM.
@@ -104,7 +202,10 @@ The extension version comes from `package.json`; webpack writes it into
 
 1. Fork the repository and branch from `main`.
 2. Make your change, with tests where it is testable.
-3. Open a pull request. For large changes, open an issue first.
+3. Run `npm run format` — CI fails on unformatted files.
+4. If you touched the service worker, tab handling or the group page, walk the
+   [manual checklist](#5-manual-checklist); the Jest suite cannot reach those.
+5. Open a pull request. For large changes, open an issue first.
 
 Report bugs on the
 [issue tracker](https://github.com/vizneo/bookmark_extension/issues).
