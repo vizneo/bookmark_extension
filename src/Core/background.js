@@ -34,7 +34,9 @@ const toJsonDataUrl = (value) => {
 };
 
 const safeFilename = (name) => {
-  const stem = String(name).replace(/[^a-z0-9-_]+/gi, "_").replace(/^_+|_+$/g, "");
+  const stem = String(name)
+    .replace(/[^a-z0-9-_]+/gi, "_")
+    .replace(/^_+|_+$/g, "");
   const date = new Date().toISOString().slice(0, 10);
   return `${stem || "vtabs"}-${date}.json`;
 };
@@ -58,7 +60,10 @@ const handlers = {
   async save_tab_group({ name, closeTabs }) {
     // Pinned tabs are deliberately left alone: they are the ones users expect
     // to survive a "save and close everything".
-    const tabs = await chrome.tabs.query({ currentWindow: true, pinned: false });
+    const tabs = await chrome.tabs.query({
+      currentWindow: true,
+      pinned: false,
+    });
     const savable = tabs.filter((tab) => isRestorableUrl(tab.url));
 
     if (savable.length === 0) {
@@ -86,7 +91,8 @@ const handlers = {
     if (!group) throw new Error("Group not found");
 
     const urls = group.tabs.map((tab) => tab.url).filter(isRestorableUrl);
-    if (urls.length === 0) throw new Error("This group has no restorable tabs.");
+    if (urls.length === 0)
+      throw new Error("This group has no restorable tabs.");
 
     // One tab at a time rather than windows.create({ url: [...all] }): there,
     // a single rejected URL fails the entire restore.
@@ -116,7 +122,8 @@ const handlers = {
 
     const tab = group.tabs.find((candidate) => candidate.id === tabId);
     if (!tab) throw new Error("Tab not found");
-    if (!isRestorableUrl(tab.url)) throw new Error("That URL cannot be opened.");
+    if (!isRestorableUrl(tab.url))
+      throw new Error("That URL cannot be opened.");
 
     const created = await chrome.tabs.create({ url: tab.url });
     return { tabId: created.id };
@@ -165,7 +172,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
   const handler = handlers[request?.action];
   if (!handler) {
-    sendResponse({ success: false, error: `Unknown action: ${request?.action}` });
+    sendResponse({
+      success: false,
+      error: `Unknown action: ${request?.action}`,
+    });
     return false;
   }
 

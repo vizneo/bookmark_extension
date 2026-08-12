@@ -43,7 +43,7 @@ const mutate = (mutator) => {
   // Keep the chain usable after a failed mutation.
   writeQueue = run.then(
     () => undefined,
-    () => undefined
+    () => undefined,
   );
   return run;
 };

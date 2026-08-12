@@ -29,12 +29,12 @@ const AboutComponent = () => (
             at the same time.
           </li>
           <li>
-            <strong>View tabs</strong> opens a full page listing the group, where
-            you can open individual tabs.
+            <strong>View tabs</strong> opens a full page listing the group,
+            where you can open individual tabs.
           </li>
           <li>
-            <strong>Import / Export</strong> moves your groups in and out as JSON
-            files, for backups or moving to another browser.
+            <strong>Import / Export</strong> moves your groups in and out as
+            JSON files, for backups or moving to another browser.
           </li>
           <li>
             <strong>Search</strong> matches group names, tab titles and URLs.
@@ -64,8 +64,8 @@ const AboutComponent = () => (
       <Card.Body>
         <ul className="mb-0">
           <li>
-            <strong>tabs</strong> — read the titles and URLs of open tabs so they
-            can be saved, and open them again on restore.
+            <strong>tabs</strong> — read the titles and URLs of open tabs so
+            they can be saved, and open them again on restore.
           </li>
           <li>
             <strong>storage</strong> — keep your saved groups on this device.
@@ -74,7 +74,8 @@ const AboutComponent = () => (
             <strong>downloads</strong> — write the JSON file when you export.
           </li>
           <li>
-            <strong>favicon</strong> — show site icons from Chrome’s local cache.
+            <strong>favicon</strong> — show site icons from Chrome’s local
+            cache.
           </li>
         </ul>
       </Card.Body>

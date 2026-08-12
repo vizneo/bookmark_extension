@@ -73,7 +73,11 @@ const createTabItem = (tab) => {
   remove.title = `Remove "${tab.title}" from this group`;
   remove.addEventListener("click", async () => {
     try {
-      await sendMessage({ action: "delete_single_tab", groupId, tabId: tab.id });
+      await sendMessage({
+        action: "delete_single_tab",
+        groupId,
+        tabId: tab.id,
+      });
       // Deleting the last tab deletes the group, so re-read rather than
       // patching the DOM and guessing.
       await loadGroup();

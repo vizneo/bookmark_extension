@@ -22,7 +22,8 @@ export const LIMITS = {
  * file:, all of which either fail at runtime or are an injection vector.
  */
 export const isRestorableUrl = (url) => {
-  if (typeof url !== "string" || url.length > LIMITS.MAX_URL_LENGTH) return false;
+  if (typeof url !== "string" || url.length > LIMITS.MAX_URL_LENGTH)
+    return false;
   try {
     return RESTORABLE_SCHEMES.has(new URL(url).protocol);
   } catch {

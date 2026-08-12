@@ -12,7 +12,7 @@ const matchesQuery = (group, query) => {
   return group.tabs.some(
     (tab) =>
       (tab.title ?? "").toLowerCase().includes(query) ||
-      (tab.url ?? "").toLowerCase().includes(query)
+      (tab.url ?? "").toLowerCase().includes(query),
   );
 };
 
@@ -27,10 +27,15 @@ const TabGroupList = () => {
   const loadGroups = useCallback(async () => {
     setIsLoading(true);
     try {
-      const { groups: loaded } = await sendMessage({ action: "get_all_groups" });
+      const { groups: loaded } = await sendMessage({
+        action: "get_all_groups",
+      });
       setGroups(loaded);
     } catch (error) {
-      setNotice({ tone: "danger", text: `Could not load groups: ${error.message}` });
+      setNotice({
+        tone: "danger",
+        text: `Could not load groups: ${error.message}`,
+      });
     } finally {
       setIsLoading(false);
     }
@@ -53,7 +58,7 @@ const TabGroupList = () => {
       totalGroups: groups.length,
       totalTabs: groups.reduce((sum, group) => sum + group.tabs.length, 0),
     }),
-    [groups]
+    [groups],
   );
 
   const handleSaveTabs = async (groupName, closeTabs) => {
@@ -99,7 +104,9 @@ const TabGroupList = () => {
       setNotice({
         tone: "success",
         text: `Imported ${imported} group${imported === 1 ? "" : "s"}.${
-          dropped ? ` ${dropped} invalid entr${dropped === 1 ? "y" : "ies"} skipped.` : ""
+          dropped
+            ? ` ${dropped} invalid entr${dropped === 1 ? "y" : "ies"} skipped.`
+            : ""
         }`,
       });
       await loadGroups();
@@ -118,9 +125,13 @@ const TabGroupList = () => {
         <div className="header-top">
           <h3>Saved tab groups</h3>
           <div className="stats">
-            <span>{stats.totalGroups} group{stats.totalGroups === 1 ? "" : "s"}</span>
+            <span>
+              {stats.totalGroups} group{stats.totalGroups === 1 ? "" : "s"}
+            </span>
             <span className="stat-divider">•</span>
-            <span>{stats.totalTabs} tab{stats.totalTabs === 1 ? "" : "s"}</span>
+            <span>
+              {stats.totalTabs} tab{stats.totalTabs === 1 ? "" : "s"}
+            </span>
           </div>
         </div>
 
@@ -132,7 +143,10 @@ const TabGroupList = () => {
           >
             Save current tabs
           </Button>
-          <Button variant="outline-secondary" onClick={() => fileInputRef.current?.click()}>
+          <Button
+            variant="outline-secondary"
+            onClick={() => fileInputRef.current?.click()}
+          >
             Import
           </Button>
           <Button
@@ -163,7 +177,10 @@ const TabGroupList = () => {
             onChange={(event) => setSearchQuery(event.target.value)}
           />
           {searchQuery && (
-            <Button variant="outline-secondary" onClick={() => setSearchQuery("")}>
+            <Button
+              variant="outline-secondary"
+              onClick={() => setSearchQuery("")}
+            >
               Clear
             </Button>
           )}
@@ -211,7 +228,9 @@ const TabGroupList = () => {
               key={group.id}
               group={group}
               onChanged={loadGroups}
-              onError={(message) => setNotice({ tone: "danger", text: message })}
+              onError={(message) =>
+                setNotice({ tone: "danger", text: message })
+              }
             />
           ))
         )}

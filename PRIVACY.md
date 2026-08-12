@@ -45,12 +45,12 @@ delete, because there was never a copy anywhere else.
 
 ## Permissions and why they exist
 
-| Permission  | Purpose |
-| ----------- | ------- |
+| Permission  | Purpose                                                                                                                |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- |
 | `tabs`      | Read the titles and URLs of tabs in the current window so they can be saved, and reopen them when you restore a group. |
-| `storage`   | Keep your saved groups on this device. |
-| `downloads` | Write the JSON file when you use Export. |
-| `favicon`   | Display site icons from the browser's local favicon cache. |
+| `storage`   | Keep your saved groups on this device.                                                                                 |
+| `downloads` | Write the JSON file when you use Export.                                                                               |
+| `favicon`   | Display site icons from the browser's local favicon cache.                                                             |
 
 vTabs requests no host permissions, so it has no access to the content of any
 page you visit.

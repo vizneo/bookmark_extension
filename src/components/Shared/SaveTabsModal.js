@@ -63,7 +63,11 @@ const SaveTabsModal = ({ show, onHide, onSave }) => {
         {error && <p className="text-danger mt-3 mb-0">{error}</p>}
       </Modal.Body>
       <Modal.Footer>
-        <Button variant="outline-secondary" onClick={onHide} disabled={isSaving}>
+        <Button
+          variant="outline-secondary"
+          onClick={onHide}
+          disabled={isSaving}
+        >
           Cancel
         </Button>
         <Button variant="primary" onClick={handleSave} disabled={isSaving}>

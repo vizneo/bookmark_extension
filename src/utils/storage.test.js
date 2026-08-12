@@ -69,7 +69,7 @@ describe("storage", () => {
     await createGroup("Existing", tabs);
     const result = await importGroups(
       [{ name: "Imported", tabs: [{ title: "T", url: "https://t.example" }] }],
-      true
+      true,
     );
 
     expect(result.imported).toBe(1);
@@ -83,15 +83,17 @@ describe("storage", () => {
     await createGroup("Existing", tabs);
     await importGroups(
       [{ name: "Imported", tabs: [{ title: "T", url: "https://t.example" }] }],
-      false
+      false,
     );
 
-    expect((await getAllGroups()).map((group) => group.name)).toEqual(["Imported"]);
+    expect((await getAllGroups()).map((group) => group.name)).toEqual([
+      "Imported",
+    ]);
   });
 
   it("refuses an import with nothing usable in it", async () => {
-    await expect(importGroups([{ name: "Junk", tabs: [] }], true)).rejects.toThrow(
-      /no valid tab groups/i
-    );
+    await expect(
+      importGroups([{ name: "Junk", tabs: [] }], true),
+    ).rejects.toThrow(/no valid tab groups/i);
   });
 });

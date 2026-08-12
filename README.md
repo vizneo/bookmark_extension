@@ -32,10 +32,15 @@ Requires Node.js 20 or newer.
 ```bash
 npm ci           # install dependencies
 npm test         # run the Jest suite
+npm run lint     # eslint
+npm run format   # rewrite with prettier (format:check to verify only)
 npm run build    # production build into build/
 npm run dev      # development build, rebuilt on every change
 npm run package  # build and zip build/ into vtabs.zip for the Web Store
 ```
+
+CI runs lint, the formatting check, the tests and a build on every branch and
+pull request, across Node 20 and 22.
 
 There is no dev server. The popup calls `chrome.*` APIs as it loads, so it only
 runs as an installed extension. Leave `npm run dev` running and press reload on
@@ -84,12 +89,12 @@ The extension version comes from `package.json`; webpack writes it into
 
 ## Permissions
 
-| Permission  | Why |
-| ----------- | --- |
+| Permission  | Why                                                                         |
+| ----------- | --------------------------------------------------------------------------- |
 | `tabs`      | Read titles and URLs of open tabs to save them, and reopen them on restore. |
-| `storage`   | Keep saved groups on this device. |
-| `downloads` | Write the JSON file when you export. |
-| `favicon`   | Show site icons from Chrome's local favicon cache. |
+| `storage`   | Keep saved groups on this device.                                           |
+| `downloads` | Write the JSON file when you export.                                        |
+| `favicon`   | Show site icons from Chrome's local favicon cache.                          |
 
 ---
 
@@ -126,7 +131,6 @@ disclosures and the assets still to produce — is in
 ## Roadmap
 
 - [ ] Store assets: screenshots and the 440×280 promo tile
-- [ ] ESLint + Prettier in CI
 - [ ] Keyboard shortcut and context-menu entry
 - [ ] Live popup refresh via `chrome.storage.onChanged`
 - [ ] Firefox and Edge builds
