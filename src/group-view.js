@@ -1,162 +1,160 @@
-/* eslint-disable no-undef */
-
 /**
- * Group View Page - Full page view for a single tab group
+ * Full-page view for a single tab group.
+ *
+ * Everything here is built with DOM nodes rather than innerHTML: group names,
+ * titles and URLs can all originate from an imported file, and string
+ * interpolation into markup was previously an injection vector.
  */
 
-// Get group ID from URL parameters
-const urlParams = new URLSearchParams(window.location.search);
-const groupId = urlParams.get('id');
+import "./group-view.css";
+import { faviconUrl } from "./utils/favicon";
+import { sendMessage } from "./utils/messaging";
+
+const groupId = new URLSearchParams(window.location.search).get("id");
+
+const el = (id) => document.getElementById(id);
 
 let currentGroup = null;
 
-// Load and display the group
-async function loadGroup() {
+const showStatus = (message, tone = "info") => {
+  const status = el("status");
+  status.textContent = message;
+  status.dataset.tone = tone;
+  status.hidden = false;
+};
+
+const showError = () => {
+  el("loading").hidden = true;
+  el("content").hidden = true;
+  el("error").hidden = false;
+};
+
+const createTabItem = (tab) => {
+  const item = document.createElement("li");
+  item.className = "tab-item";
+
+  const icon = document.createElement("img");
+  icon.className = "tab-favicon";
+  icon.alt = "";
+  icon.src = faviconUrl(tab.url);
+  icon.addEventListener("error", () => {
+    icon.style.visibility = "hidden";
+  });
+
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "tab-open";
+
+  const title = document.createElement("div");
+  title.className = "tab-title";
+  title.textContent = tab.title;
+
+  const url = document.createElement("div");
+  url.className = "tab-url";
+  url.textContent = tab.url;
+
+  button.append(title, url);
+  button.addEventListener("click", async () => {
+    try {
+      await sendMessage({
+        action: "restore_single_tab",
+        groupId,
+        tabId: tab.id,
+      });
+    } catch (error) {
+      showStatus(`Could not open that tab: ${error.message}`, "error");
+    }
+  });
+
+  const remove = document.createElement("button");
+  remove.type = "button";
+  remove.className = "btn tab-remove";
+  remove.textContent = "Remove";
+  remove.title = `Remove "${tab.title}" from this group`;
+  remove.addEventListener("click", async () => {
+    try {
+      await sendMessage({ action: "delete_single_tab", groupId, tabId: tab.id });
+      // Deleting the last tab deletes the group, so re-read rather than
+      // patching the DOM and guessing.
+      await loadGroup();
+      showStatus("Tab removed.");
+    } catch (error) {
+      showStatus(`Could not remove that tab: ${error.message}`, "error");
+    }
+  });
+
+  item.append(icon, button, remove);
+  return item;
+};
+
+const displayGroup = (group) => {
+  el("loading").hidden = true;
+  el("content").hidden = false;
+
+  document.title = `${group.name} — vTabs`;
+  el("groupName").textContent = group.name;
+  el("tabCount").textContent = `${group.tabs.length} tab${
+    group.tabs.length === 1 ? "" : "s"
+  }`;
+  el("timestamp").textContent = new Date(group.timestamp).toLocaleString();
+
+  const list = el("tabsList");
+  list.replaceChildren(...group.tabs.map(createTabItem));
+};
+
+const restoreAll = async (deleteAfterRestore) => {
+  if (
+    deleteAfterRestore &&
+    !window.confirm(`Open all tabs and delete "${currentGroup.name}"?`)
+  ) {
+    return;
+  }
+
+  try {
+    const response = await sendMessage({
+      action: "restore_tab_group",
+      groupId,
+      deleteAfterRestore,
+    });
+
+    const skipped = response.skipped
+      ? ` ${response.skipped} could not be opened.`
+      : "";
+    showStatus(`Opened ${response.restored} tabs.${skipped}`);
+
+    if (deleteAfterRestore) window.close();
+  } catch (error) {
+    showStatus(`Failed to open tabs: ${error.message}`, "error");
+  }
+};
+
+const loadGroup = async () => {
   if (!groupId) {
     showError();
     return;
   }
 
   try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'get_all_groups'
-    });
+    const { groups } = await sendMessage({ action: "get_all_groups" });
+    currentGroup = groups.find((group) => group.id === groupId);
 
-    if (response?.success) {
-      currentGroup = response.groups.find(g => g.id === groupId);
-      
-      if (currentGroup) {
-        displayGroup(currentGroup);
-      } else {
-        showError();
-      }
-    } else {
+    if (!currentGroup) {
       showError();
+      return;
     }
+
+    displayGroup(currentGroup);
   } catch (error) {
-    console.error('Error loading group:', error);
+    console.error("vTabs: could not load group", error);
     showError();
   }
-}
+};
 
-// Display the group information and tabs
-function displayGroup(group) {
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('content').style.display = 'block';
+// Bound once: loadGroup() re-runs after edits and would otherwise stack up
+// duplicate listeners.
+el("restoreAllBtn").addEventListener("click", () => restoreAll(false));
+el("restoreAndDeleteBtn").addEventListener("click", () => restoreAll(true));
+el("backBtn").addEventListener("click", () => window.close());
+el("errorCloseBtn").addEventListener("click", () => window.close());
 
-  // Set group info
-  document.getElementById('groupName').textContent = group.name;
-  document.getElementById('tabCount').textContent = 
-    `${group.tabs.length} tab${group.tabs.length !== 1 ? 's' : ''}`;
-  document.getElementById('timestamp').textContent = 
-    new Date(group.timestamp).toLocaleString();
-
-  // Display tabs
-  const tabsList = document.getElementById('tabsList');
-  tabsList.innerHTML = '';
-
-  group.tabs.forEach(tab => {
-    const tabItem = createTabItem(tab);
-    tabsList.appendChild(tabItem);
-  });
-
-  // Set up action buttons
-  document.getElementById('restoreAllBtn').addEventListener('click', restoreAllTabs);
-  document.getElementById('restoreAndDeleteBtn').addEventListener('click', restoreAndDelete);
-  document.getElementById('backBtn').addEventListener('click', () => window.close());
-}
-
-// Create a tab item element
-function createTabItem(tab) {
-  const div = document.createElement('div');
-  div.className = 'tab-item';
-  
-  // Get favicon
-  const faviconUrl = tab.favIconUrl || getFaviconUrl(tab.url);
-  
-  div.innerHTML = `
-    ${faviconUrl ? `<img src="${faviconUrl}" class="tab-favicon" onerror="this.style.display='none'" alt="">` : ''}
-    <div class="tab-content">
-      <div class="tab-title">${escapeHtml(tab.title)}</div>
-      <div class="tab-url">${escapeHtml(tab.url)}</div>
-    </div>
-  `;
-  
-  // Click to open individual tab
-  div.addEventListener('click', () => {
-    chrome.tabs.create({ url: tab.url });
-  });
-  
-  return div;
-}
-
-// Get favicon URL using Google's service
-function getFaviconUrl(url) {
-  try {
-    const urlObj = new URL(url);
-    return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
-  } catch {
-    return null;
-  }
-}
-
-// Escape HTML to prevent XSS
-function escapeHtml(text) {
-  const div = document.createElement('div');
-  div.textContent = text;
-  return div.innerHTML;
-}
-
-// Restore all tabs from the group
-async function restoreAllTabs() {
-  try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'restore_tab_group',
-      groupId: groupId,
-      deleteAfterRestore: false
-    });
-
-    if (response?.success) {
-      alert('All tabs opened successfully!');
-    } else {
-      alert('Failed to open tabs: ' + (response?.error || 'Unknown error'));
-    }
-  } catch (error) {
-    console.error('Error restoring tabs:', error);
-    alert('Failed to open tabs');
-  }
-}
-
-// Restore all tabs and delete the group
-async function restoreAndDelete() {
-  if (!confirm(`Open all tabs and delete "${currentGroup.name}"?`)) {
-    return;
-  }
-
-  try {
-    const response = await chrome.runtime.sendMessage({
-      action: 'restore_tab_group',
-      groupId: groupId,
-      deleteAfterRestore: true
-    });
-
-    if (response?.success) {
-      alert('Tabs opened and group deleted!');
-      window.close();
-    } else {
-      alert('Failed: ' + (response?.error || 'Unknown error'));
-    }
-  } catch (error) {
-    console.error('Error:', error);
-    alert('Failed to complete operation');
-  }
-}
-
-// Show error state
-function showError() {
-  document.getElementById('loading').style.display = 'none';
-  document.getElementById('error').style.display = 'block';
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', loadGroup);
+loadGroup();

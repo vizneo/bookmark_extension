@@ -1,208 +1,206 @@
-/* eslint-disable no-undef */
-import React, { useState, useEffect } from "react";
-import { Button, Form, InputGroup, Alert, Spinner } from "react-bootstrap";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Alert, Button, Form, InputGroup, Spinner } from "react-bootstrap";
 import TabGroupItem from "../../Shared/TabGroupItem";
 import SaveTabsModal from "../../Shared/SaveTabsModal";
+import { sendMessage } from "../../../utils/messaging";
+import { assertImportSize } from "../../../utils/validation";
 import "./TabGroupList.css";
 
-/**
- * TabGroupList - Main component for managing saved tab groups
- */
+const matchesQuery = (group, query) => {
+  if (group.name.toLowerCase().includes(query)) return true;
+  // Imported data may be missing a title, so never assume the field is there.
+  return group.tabs.some(
+    (tab) =>
+      (tab.title ?? "").toLowerCase().includes(query) ||
+      (tab.url ?? "").toLowerCase().includes(query)
+  );
+};
+
 const TabGroupList = () => {
   const [groups, setGroups] = useState([]);
-  const [filteredGroups, setFilteredGroups] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState({ totalGroups: 0, totalTabs: 0 });
+  const [notice, setNotice] = useState(null);
+  const fileInputRef = useRef(null);
 
-  // Load groups on mount and set up refresh
-  useEffect(() => {
-    loadGroups();
+  const loadGroups = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { groups: loaded } = await sendMessage({ action: "get_all_groups" });
+      setGroups(loaded);
+    } catch (error) {
+      setNotice({ tone: "danger", text: `Could not load groups: ${error.message}` });
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
 
-  // Filter groups based on search query
   useEffect(() => {
-    if (searchQuery.trim() === "") {
-      setFilteredGroups(groups);
-    } else {
-      const query = searchQuery.toLowerCase();
-      const filtered = groups.filter((group) => {
-        // Search in group name
-        if (group.name.toLowerCase().includes(query)) return true;
-        // Search in tab titles and URLs
-        return group.tabs.some(
-          (tab) =>
-            tab.title.toLowerCase().includes(query) ||
-            tab.url.toLowerCase().includes(query)
-        );
-      });
-      setFilteredGroups(filtered);
+    loadGroups();
+  }, [loadGroups]);
+
+  // Derived, not stored: keeping a second copy of the list in state meant the
+  // two could drift apart whenever a mutation landed mid-search.
+  const filteredGroups = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return groups;
+    return groups.filter((group) => matchesQuery(group, query));
+  }, [groups, searchQuery]);
+
+  const stats = useMemo(
+    () => ({
+      totalGroups: groups.length,
+      totalTabs: groups.reduce((sum, group) => sum + group.tabs.length, 0),
+    }),
+    [groups]
+  );
+
+  const handleSaveTabs = async (groupName, closeTabs) => {
+    const response = await sendMessage({
+      action: "save_tab_group",
+      name: groupName,
+      closeTabs,
+    });
+    const skipped = response.skipped
+      ? ` ${response.skipped} tab${response.skipped === 1 ? "" : "s"} skipped (pinned or non-web).`
+      : "";
+    setNotice({
+      tone: "success",
+      text: `Saved ${response.group.tabs.length} tabs.${skipped}`,
+    });
+    await loadGroups();
+  };
+
+  const handleExportAll = async () => {
+    try {
+      const { cancelled } = await sendMessage({ action: "export_all_groups" });
+      if (!cancelled) setNotice({ tone: "success", text: "Export started." });
+    } catch (error) {
+      setNotice({ tone: "danger", text: `Export failed: ${error.message}` });
     }
-  }, [searchQuery, groups]);
-
-  const loadGroups = () => {
-    setIsLoading(true);
-    chrome.runtime.sendMessage({ action: "get_all_groups" }, (response) => {
-      if (response?.success) {
-        setGroups(response.groups);
-        setFilteredGroups(response.groups);
-      } else {
-        console.error("Failed to load groups:", response?.error);
-      }
-      setIsLoading(false);
-    });
-
-    chrome.runtime.sendMessage({ action: "get_storage_stats" }, (response) => {
-      if (response?.success) {
-        setStats(response.stats);
-      }
-    });
   };
 
-  const handleSaveTabs = (groupName, closeTabs) => {
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        { action: "save_tab_group", name: groupName, closeTabs },
-        (response) => {
-          if (response?.success) {
-            console.log("Tabs saved successfully");
-            loadGroups();
-            resolve();
-          } else {
-            console.error("Failed to save tabs:", response?.error);
-            reject(new Error(response?.error || "Failed to save tabs"));
-          }
-        }
-      );
-    });
-  };
+  const handleImportFile = async (event) => {
+    const file = event.target.files?.[0];
+    // Reset immediately so re-picking the same file still fires a change.
+    event.target.value = "";
+    if (!file) return;
 
-  const handleExportAll = () => {
-    chrome.runtime.sendMessage({ action: "export_all_groups" }, (response) => {
-      if (response?.success) {
-        console.log("All groups exported successfully");
-      } else {
-        console.error("Failed to export groups:", response?.error);
-      }
-    });
-  };
-
-  const handleImportClick = () => {
-    // Create file input element
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.json';
-    input.onchange = (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        try {
-          const jsonData = JSON.parse(event.target.result);
-          chrome.runtime.sendMessage(
-            { action: "import_groups", data: jsonData, mergeWithExisting: true },
-            (response) => {
-              if (response?.success) {
-                alert(`Successfully imported! ${response.groups.length} total groups.`);
-                loadGroups();
-              } else {
-                alert("Failed to import: " + (response?.error || "Unknown error"));
-              }
-            }
-          );
-        } catch (error) {
-          alert("Invalid JSON file. Please check the file format.");
-          console.error("Import error:", error);
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
+    try {
+      assertImportSize(file.size);
+      const data = JSON.parse(await file.text());
+      const { imported, skipped } = await sendMessage({
+        action: "import_groups",
+        data,
+        mergeWithExisting: true,
+      });
+      const dropped = skipped.groups + skipped.tabs;
+      setNotice({
+        tone: "success",
+        text: `Imported ${imported} group${imported === 1 ? "" : "s"}.${
+          dropped ? ` ${dropped} invalid entr${dropped === 1 ? "y" : "ies"} skipped.` : ""
+        }`,
+      });
+      await loadGroups();
+    } catch (error) {
+      const text =
+        error instanceof SyntaxError
+          ? "That file is not valid JSON."
+          : `Import failed: ${error.message}`;
+      setNotice({ tone: "danger", text });
+    }
   };
 
   return (
     <div className="tab-group-list">
       <div className="list-header">
         <div className="header-top">
-          <h3>Saved Tab Groups</h3>
+          <h3>Saved tab groups</h3>
           <div className="stats">
-            <span className="stat-item">
-              {stats.totalGroups} group{stats.totalGroups !== 1 ? "s" : ""}
-            </span>
+            <span>{stats.totalGroups} group{stats.totalGroups === 1 ? "" : "s"}</span>
             <span className="stat-divider">•</span>
-            <span className="stat-item">
-              {stats.totalTabs} tab{stats.totalTabs !== 1 ? "s" : ""}
-            </span>
+            <span>{stats.totalTabs} tab{stats.totalTabs === 1 ? "" : "s"}</span>
           </div>
         </div>
 
         <div className="header-actions">
           <Button
             variant="primary"
-            onClick={() => setShowSaveModal(true)}
             className="save-btn"
+            onClick={() => setShowSaveModal(true)}
           >
-            💾 Save Current Tabs
+            Save current tabs
           </Button>
-          <Button
-            variant="success"
-            onClick={handleImportClick}
-          >
-            📥 Import
+          <Button variant="outline-secondary" onClick={() => fileInputRef.current?.click()}>
+            Import
           </Button>
           <Button
             variant="outline-secondary"
             onClick={handleExportAll}
             disabled={groups.length === 0}
           >
-            📤 Export All
+            Export all
           </Button>
-          <Button variant="outline-info" onClick={loadGroups}>
-            🔄 Refresh
+          <Button variant="outline-secondary" onClick={loadGroups}>
+            Refresh
           </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json,.json"
+            onChange={handleImportFile}
+            hidden
+          />
         </div>
 
         <InputGroup className="search-box">
           <Form.Control
-            type="text"
-            placeholder="Search groups and tabs..."
+            type="search"
+            placeholder="Search groups and tabs…"
+            aria-label="Search groups and tabs"
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            onChange={(event) => setSearchQuery(event.target.value)}
           />
           {searchQuery && (
-            <Button
-              variant="outline-secondary"
-              onClick={() => setSearchQuery("")}
-            >
+            <Button variant="outline-secondary" onClick={() => setSearchQuery("")}>
               Clear
             </Button>
           )}
         </InputGroup>
       </div>
 
+      {notice && (
+        <Alert
+          variant={notice.tone}
+          dismissible
+          onClose={() => setNotice(null)}
+          className="notice"
+        >
+          {notice.text}
+        </Alert>
+      )}
+
       <div className="groups-container">
         {isLoading ? (
           <div className="loading-state">
             <Spinner animation="border" role="status">
-              <span className="visually-hidden">Loading...</span>
+              <span className="visually-hidden">Loading…</span>
             </Spinner>
-            <p>Loading groups...</p>
           </div>
         ) : filteredGroups.length === 0 ? (
-          <Alert variant="info" className="empty-state">
+          <Alert variant="light" className="empty-state">
             {searchQuery ? (
               <>
-                <strong>No results found</strong>
-                <p>No groups or tabs match "{searchQuery}"</p>
+                <strong>No results</strong>
+                <p>Nothing matches “{searchQuery}”.</p>
               </>
             ) : (
               <>
                 <strong>No saved groups yet</strong>
                 <p>
-                  Click "Save Current Tabs" to save your first tab group! Your
-                  tabs will be stored locally and can be restored anytime.
+                  Use “Save current tabs” to store this window. Everything stays
+                  on this device.
                 </p>
               </>
             )}
@@ -212,8 +210,8 @@ const TabGroupList = () => {
             <TabGroupItem
               key={group.id}
               group={group}
-              onUpdate={loadGroups}
-              onDelete={loadGroups}
+              onChanged={loadGroups}
+              onError={(message) => setNotice({ tone: "danger", text: message })}
             />
           ))
         )}

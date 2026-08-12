@@ -4,85 +4,74 @@ This file provides guidance to WARP (warp.dev) when working with code in this re
 
 ## Project Overview
 
-MyBookmarkSession is a Chrome Manifest V3 browser extension built with React that transfers browser sessions between browsers. The extension uses a service worker background script to interact with Chrome's APIs for saving and restoring tab sessions as JSON files.
+vTabs is a Chrome Manifest V3 extension that saves the open tabs of a window as
+a named group and restores them later. Groups live in `chrome.storage.local`;
+JSON import/export moves them between browsers. There is no backend.
+
+## Commands
+
+```bash
+npm ci           # install
+npm test         # jest
+npm run build    # production build -> build/
+npm start        # webpack dev server
+npm run package  # build + zip to vtabs.zip
+```
+
+Run a single test file: `npm test -- storage.test.js`
+
+Load the extension from `chrome://extensions` → Developer mode → Load unpacked →
+select `build/`.
 
 ## Architecture
 
-### Build System
-The project uses Webpack 5 with separate development and production configurations:
-- **Entry points**: Two separate bundles are generated:
-  - `main.js` - React UI popup (entry: `src/index.js`)
-  - `background.js` - Chrome service worker (entry: `src/Core/background.js`)
-- **Webpack configs** are in `webpack/`:
-  - `webpack.common.js` - Shared configuration
-  - `webpack.dev.js` - Development with hot reload
-  - `webpack.prod.js` - Production build
-- Build output goes to `build/` directory which is loaded as an unpacked extension
+Three webpack entry points, all emitted to `build/`:
 
-### Component Structure
-- **Core**: `src/Core/` contains the main App component and background service worker
-- **Pages**: `src/components/Pages/` contains feature components:
-  - `SaveTabs/` - Saves current browser tabs to JSON
-  - `RestoreSession/` - Restores tabs from uploaded JSON
-  - `About/` - Information page
-- **Shared**: `src/components/Shared/` contains reusable components (Dropzone, Filepond)
-- **Navigation**: `src/components/Navbar/` contains the main navigation using React Bootstrap
+- `main` (`src/index.js`) — React popup, rendered into `index.html`
+- `background` (`src/Core/background.js`) — MV3 service worker
+- `group-view` (`src/group-view.js`) — full-page view of one group, plain DOM
 
-### Chrome Extension Architecture
-- **Manifest V3**: Uses service worker instead of background page
-- **Communication**: UI communicates with background script via `chrome.runtime.sendMessage()`
-- **Permissions**: Requires `bookmarks`, `tabs`, `downloads`, `storage`
-- **Background script** handles:
-  - `save_tabs` action: Queries current window tabs, converts to JSON, triggers download
-  - `restore_session` action: Opens new window with tabs from uploaded JSON
+`optimization.splitChunks` deliberately excludes `background`: the service
+worker is a classic worker and must stay a single file.
 
-## Common Commands
+### Message passing
 
-### Development
-```bash
-# Install dependencies (clean install)
-npm ci
+The popup and group page never touch `chrome.storage` directly. They send
+messages through `utils/messaging.js` (a promise wrapper that surfaces
+`chrome.runtime.lastError`) to a handler map in `background.js`. Because the
+service worker is the only writer, the single promise queue in
+`utils/storage.js` is sufficient to serialise read-modify-write cycles and
+prevent lost updates.
 
-# Start development server with hot reload
-npm run start
+Handlers: `save_tab_group`, `get_all_groups`, `restore_tab_group`,
+`restore_single_tab`, `delete_tab_group`, `delete_single_tab`,
+`update_group_name`, `export_group`, `export_all_groups`, `import_groups`,
+`get_storage_stats`.
 
-# Build for production
-npm run build
+### Trust boundaries
 
-# Run tests
-npm test
-```
+- Imported JSON is untrusted. It goes through `normalizeImport` in
+  `utils/validation.js`, which sanitises fields, enforces size limits and drops
+  entries it cannot use.
+- URLs are checked with `isRestorableUrl` (allow-list: `http:`, `https:`,
+  `ftp:`) before reaching `chrome.tabs.create` or the DOM.
+- `group-view.js` builds DOM nodes rather than assigning `innerHTML`, and the
+  extension pages run under an explicit `script-src 'self'` CSP, so inline
+  event-handler attributes will not execute.
 
-### Loading Extension in Chrome
-After building, load the extension in Chrome:
-1. Navigate to `chrome://extensions`
-2. Enable "Developer mode"
-3. Click "Load unpacked"
-4. Select the `build/` directory
+### Versioning
 
-### Testing
-Tests use React Testing Library and Jest (via react-scripts). Test files are co-located with components using `.test.js` suffix.
+`package.json` is the single source of truth. `webpack.common.js` rewrites the
+`version` field of `public/manifest.json` during the copy step, so
+`public/manifest.json` is not directly loadable as an unpacked extension —
+always load `build/`.
 
-Run specific test file:
-```bash
-npm test -- SaveTabsComponent.test.js
-```
+## Conventions
 
-## Key Implementation Details
-
-### Background Script Message Handling
-The background service worker (`src/Core/background.js`) listens for messages and must return `true` to keep the message channel open for async `sendResponse`. Both save and restore actions handle errors and send responses back to the UI.
-
-### Tab Restoration Limits
-In `background.js`, if more than 5 tabs are stored, only the last tabs (after index 3) are restored to prevent overwhelming the browser. This logic may need adjustment based on user feedback.
-
-### Babel Configuration
-React preset uses automatic runtime (`"runtime": "automatic"`), so no explicit React imports are needed in JSX files (though some files still have them for backwards compatibility).
-
-## Development Notes
-
-- The extension is currently in development stage
-- Roadmap includes Firefox, Safari, Edge compatibility and cloud backup features
-- Uses Bootstrap 5.3 and React Bootstrap for UI styling
-- ESLint extends react-app configuration
-- Chrome global variables are available via `/* eslint-disable no-undef */` comments where needed
+- Babel config lives in `.babelrc` and uses the automatic JSX runtime, so JSX
+  files do not need to import React.
+- Tests are co-located as `*.test.js`. `config/jest/setupTests.js` installs an
+  in-memory `chrome` API mock; extend it there rather than mocking per file.
+- Favicons come from Chrome's local cache via the `favicon` permission
+  (`utils/favicon.js`). Do not reintroduce a remote favicon service — it would
+  leak browsing data and contradict the extension's privacy claims.

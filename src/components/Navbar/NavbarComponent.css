@@ -1,24 +1,13 @@
-.navbar {
+.app-navbar {
+  position: sticky;
   top: 0;
-  width: 100%;
-  z-index: 1;
+  z-index: 20;
+  border-bottom: 1px solid #dee2e6;
 }
 
-.App-logo {
-  height: 20px;
-  pointer-events: none;
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
-}
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.app-logo {
+  height: 22px;
+  width: 22px;
+  margin-right: 8px;
+  vertical-align: text-bottom;
 }
