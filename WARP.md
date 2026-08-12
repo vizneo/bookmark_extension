@@ -14,7 +14,7 @@ JSON import/export moves them between browsers. There is no backend.
 npm ci           # install
 npm test         # jest
 npm run build    # production build -> build/
-npm start        # webpack dev server
+npm run dev      # development build, --watch
 npm run package  # build + zip to vtabs.zip
 ```
 
@@ -22,6 +22,11 @@ Run a single test file: `npm test -- storage.test.js`
 
 Load the extension from `chrome://extensions` → Developer mode → Load unpacked →
 select `build/`.
+
+There is deliberately no dev server: the popup touches `chrome.*` at import
+time and cannot run on a localhost page. Use `npm run dev` and reload the
+extension. Source maps must stay eval-free — the MV3 CSP forbids
+`'unsafe-eval'`, so an `eval-*` devtool value breaks the extension.
 
 ## Architecture
 

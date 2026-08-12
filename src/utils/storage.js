@@ -15,7 +15,7 @@ const STORAGE_KEY = "tabGroups";
 
 let writeQueue = Promise.resolve();
 
-export const generateId = () =>
+const generateId = () =>
   typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
@@ -111,9 +111,4 @@ export const getStats = async () => {
     totalGroups: groups.length,
     totalTabs: groups.reduce((sum, group) => sum + group.tabs.length, 0),
   };
-};
-
-/** Exposed for tests; resets the serialisation chain between cases. */
-export const __resetWriteQueue = () => {
-  writeQueue = Promise.resolve();
 };
