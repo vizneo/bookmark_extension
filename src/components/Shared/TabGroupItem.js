@@ -3,16 +3,19 @@ import { Badge, Button, Form } from "react-bootstrap";
 import { sendMessage } from "../../utils/messaging";
 import "./TabGroupItem.css";
 
-/** One saved group: name, counts, and the actions that operate on it. */
-const TabGroupItem = ({ group, onChanged, onError }) => {
+/**
+ * One saved group: name, counts, and the actions that operate on it.
+ *
+ * Nothing here tells the list to refresh — the list watches storage, so a
+ * successful mutation re-renders it on its own.
+ */
+const TabGroupItem = ({ group, onError }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedName, setEditedName] = useState(group.name);
 
-  const run = async (message, { refresh = false } = {}) => {
+  const run = async (message) => {
     try {
-      const response = await sendMessage(message);
-      if (refresh) onChanged();
-      return response;
+      return await sendMessage(message);
     } catch (error) {
       onError(error.message);
       return null;
@@ -34,10 +37,7 @@ const TabGroupItem = ({ group, onChanged, onError }) => {
     ) {
       return;
     }
-    run(
-      { action: "restore_tab_group", groupId: group.id, deleteAfterRestore },
-      { refresh: deleteAfterRestore },
-    );
+    run({ action: "restore_tab_group", groupId: group.id, deleteAfterRestore });
   };
 
   const handleDelete = () => {
@@ -48,7 +48,7 @@ const TabGroupItem = ({ group, onChanged, onError }) => {
     ) {
       return;
     }
-    run({ action: "delete_tab_group", groupId: group.id }, { refresh: true });
+    run({ action: "delete_tab_group", groupId: group.id });
   };
 
   const handleRename = () => {
@@ -59,10 +59,7 @@ const TabGroupItem = ({ group, onChanged, onError }) => {
       setEditedName(group.name);
       return;
     }
-    run(
-      { action: "update_group_name", groupId: group.id, newName: name },
-      { refresh: true },
-    );
+    run({ action: "update_group_name", groupId: group.id, newName: name });
   };
 
   return (
