@@ -30,12 +30,16 @@ server, no account, and no analytics, and makes no network requests of its own.
 Requires Node.js 20 or newer.
 
 ```bash
-npm ci        # install dependencies
-npm test      # run the Jest suite
-npm run build # production build into build/
-npm start     # webpack dev server with hot reload
+npm ci           # install dependencies
+npm test         # run the Jest suite
+npm run build    # production build into build/
+npm run dev      # development build, rebuilt on every change
 npm run package  # build and zip build/ into vtabs.zip for the Web Store
 ```
+
+There is no dev server. The popup calls `chrome.*` APIs as it loads, so it only
+runs as an installed extension. Leave `npm run dev` running and press reload on
+the extension in `chrome://extensions` to pick up a change.
 
 ### Loading the unpacked extension
 
