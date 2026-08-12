@@ -100,16 +100,39 @@ Report bugs on the
 
 ---
 
+## Releasing
+
+Bump `version` in `package.json`, merge to `main`, then tag:
+
+```bash
+git tag v1.0.1 && git push origin v1.0.1
+```
+
+`.github/workflows/release.yaml` tests, builds, checks the tag against the
+manifest version, zips `build/`, attaches it to a GitHub release, and uploads a
+draft to the Chrome Web Store if the `CWS_*` secrets are configured. Publishing
+stays manual.
+
+The full submission checklist — listing copy, permission justifications, data
+disclosures and the assets still to produce — is in
+[docs/STORE_LISTING.md](./docs/STORE_LISTING.md).
+
+---
+
 ## Roadmap
 
-- [ ] Chrome Web Store listing: privacy policy, screenshots, store copy
-- [ ] Release pipeline that packages and uploads to the Web Store
+- [ ] Store assets: screenshots and the 440×280 promo tile
 - [ ] ESLint + Prettier in CI
 - [ ] Keyboard shortcut and context-menu entry
 - [ ] Live popup refresh via `chrome.storage.onChanged`
 - [ ] Firefox and Edge builds
 
 ---
+
+## Privacy
+
+vTabs stores your saved groups on your device and makes no network requests of
+its own. See [PRIVACY.md](./PRIVACY.md).
 
 ## License
 

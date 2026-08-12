@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    name: Test and build
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20, 22]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm test
+
+      - run: npm run build
+
+      # A broken manifest fails at install time rather than in CI, so assert
+      # the things the Web Store rejects before anyone tries to upload.
+      - name: Check the built manifest
+        run: |
+          node --input-type=module -e '
+            import { readFileSync } from "node:fs";
+            const manifest = JSON.parse(readFileSync("build/manifest.json", "utf8"));
+            const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+            const fail = (message) => { console.error(`manifest: ${message}`); process.exitCode = 1; };
+
+            if (manifest.version !== pkg.version) {
+              fail(`version ${manifest.version} does not match package.json ${pkg.version}`);
+            }
+            if (manifest.name.length > 45) fail(`name is ${manifest.name.length} chars (max 45)`);
+            if (manifest.description.length > 132) {
+              fail(`description is ${manifest.description.length} chars (max 132)`);
+            }
+
+            // Every permission must be one we can justify in the listing.
+            const declared = new Set(manifest.permissions);
+            const allowed = new Set(["tabs", "storage", "downloads", "favicon"]);
+            for (const permission of declared) {
+              if (!allowed.has(permission)) fail(`unexpected permission "${permission}"`);
+            }
+          '
