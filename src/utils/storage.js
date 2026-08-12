@@ -9,9 +9,8 @@
  * covers every writer.
  */
 
+import { STORAGE_KEY } from "./constants";
 import { normalizeImport } from "./validation";
-
-const STORAGE_KEY = "tabGroups";
 
 let writeQueue = Promise.resolve();
 

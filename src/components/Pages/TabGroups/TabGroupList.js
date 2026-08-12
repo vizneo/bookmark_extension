@@ -3,6 +3,7 @@ import { Alert, Button, Form, InputGroup, Spinner } from "react-bootstrap";
 import TabGroupItem from "../../Shared/TabGroupItem";
 import SaveTabsModal from "../../Shared/SaveTabsModal";
 import { sendMessage } from "../../../utils/messaging";
+import { onGroupsChanged } from "../../../utils/storageEvents";
 import { assertImportSize } from "../../../utils/validation";
 import "./TabGroupList.css";
 
@@ -45,6 +46,12 @@ const TabGroupList = () => {
     loadGroups();
   }, [loadGroups]);
 
+  // Every mutation goes through the service worker, which writes to storage,
+  // so watching storage keeps this list current no matter which context made
+  // the change — including the group page in another tab. Nothing below needs
+  // to refetch after acting.
+  useEffect(() => onGroupsChanged(setGroups), []);
+
   // Derived, not stored: keeping a second copy of the list in state meant the
   // two could drift apart whenever a mutation landed mid-search.
   const filteredGroups = useMemo(() => {
@@ -74,7 +81,6 @@ const TabGroupList = () => {
       tone: "success",
       text: `Saved ${response.group.tabs.length} tabs.${skipped}`,
     });
-    await loadGroups();
   };
 
   const handleExportAll = async () => {
@@ -109,7 +115,6 @@ const TabGroupList = () => {
             : ""
         }`,
       });
-      await loadGroups();
     } catch (error) {
       const text =
         error instanceof SyntaxError
@@ -155,9 +160,6 @@ const TabGroupList = () => {
             disabled={groups.length === 0}
           >
             Export all
-          </Button>
-          <Button variant="outline-secondary" onClick={loadGroups}>
-            Refresh
           </Button>
           <input
             ref={fileInputRef}
@@ -227,7 +229,6 @@ const TabGroupList = () => {
             <TabGroupItem
               key={group.id}
               group={group}
-              onChanged={loadGroups}
               onError={(message) =>
                 setNotice({ tone: "danger", text: message })
               }

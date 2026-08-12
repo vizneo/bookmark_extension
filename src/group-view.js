@@ -9,6 +9,7 @@
 import "./group-view.css";
 import { faviconUrl } from "./utils/favicon";
 import { sendMessage } from "./utils/messaging";
+import { onGroupsChanged } from "./utils/storageEvents";
 
 const groupId = new URLSearchParams(window.location.search).get("id");
 
@@ -78,9 +79,8 @@ const createTabItem = (tab) => {
         groupId,
         tabId: tab.id,
       });
-      // Deleting the last tab deletes the group, so re-read rather than
-      // patching the DOM and guessing.
-      await loadGroup();
+      // The storage subscription re-renders the list, including the case
+      // where that was the last tab and the group no longer exists.
       showStatus("Tab removed.");
     } catch (error) {
       showStatus(`Could not remove that tab: ${error.message}`, "error");
@@ -132,6 +132,17 @@ const restoreAll = async (deleteAfterRestore) => {
   }
 };
 
+const render = (groups) => {
+  currentGroup = groups.find((group) => group.id === groupId);
+
+  if (!currentGroup) {
+    showError();
+    return;
+  }
+
+  displayGroup(currentGroup);
+};
+
 const loadGroup = async () => {
   if (!groupId) {
     showError();
@@ -140,25 +151,22 @@ const loadGroup = async () => {
 
   try {
     const { groups } = await sendMessage({ action: "get_all_groups" });
-    currentGroup = groups.find((group) => group.id === groupId);
-
-    if (!currentGroup) {
-      showError();
-      return;
-    }
-
-    displayGroup(currentGroup);
+    render(groups);
   } catch (error) {
     console.error("vTabs: could not load group", error);
     showError();
   }
 };
 
-// Bound once: loadGroup() re-runs after edits and would otherwise stack up
-// duplicate listeners.
+// Bound once: the list re-renders on every storage change and would otherwise
+// stack up duplicate listeners.
 el("restoreAllBtn").addEventListener("click", () => restoreAll(false));
 el("restoreAndDeleteBtn").addEventListener("click", () => restoreAll(true));
 el("backBtn").addEventListener("click", () => window.close());
 el("errorCloseBtn").addEventListener("click", () => window.close());
+
+// Keeps this page current when the popup, or another copy of this page,
+// renames or deletes something.
+onGroupsChanged(render);
 
 loadGroup();

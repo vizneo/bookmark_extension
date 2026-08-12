@@ -17,6 +17,20 @@ const createStorageArea = () => {
   };
 };
 
+/** Stand-in for a chrome.events.Event, with a hook for firing it in tests. */
+const createEvent = () => {
+  const listeners = new Set();
+  return {
+    addListener: jest.fn((listener) => listeners.add(listener)),
+    removeListener: jest.fn((listener) => listeners.delete(listener)),
+    hasListeners: () => listeners.size > 0,
+    __emit: (...args) => {
+      for (const listener of [...listeners]) listener(...args);
+    },
+    __reset: () => listeners.clear(),
+  };
+};
+
 global.chrome = {
   runtime: {
     id: "vtabs-test",
@@ -26,7 +40,7 @@ global.chrome = {
     getURL: (path) =>
       `chrome-extension://vtabs-test/${path.replace(/^\//, "")}`,
   },
-  storage: { local: createStorageArea() },
+  storage: { local: createStorageArea(), onChanged: createEvent() },
   tabs: {
     query: jest.fn(async () => []),
     create: jest.fn(async () => ({ id: 1 })),
@@ -38,6 +52,9 @@ global.chrome = {
 
 beforeEach(() => {
   chrome.storage.local.__reset();
+  chrome.storage.onChanged.__reset();
   chrome.runtime.lastError = undefined;
+  // clearAllMocks, not resetAllMocks: the mock implementations above have to
+  // survive between tests.
   jest.clearAllMocks();
 });

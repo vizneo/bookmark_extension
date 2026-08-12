@@ -58,6 +58,18 @@ Handlers: `save_tab_group`, `get_all_groups`, `restore_tab_group`,
 `update_group_name`, `export_group`, `export_all_groups`, `import_groups`,
 `get_storage_stats`.
 
+### Live updates
+
+Messages go one way, in; state comes back out through
+`chrome.storage.onChanged`, wrapped by `utils/storageEvents.js`. The popup and
+the group page each subscribe once and re-render from the event payload, so a
+change made in one context appears in the other without polling.
+
+The practical rule: **do not refetch after a mutation.** A successful handler
+writes to storage, the write fires the event, and every open view updates
+itself. Adding a manual refresh on top produces a redundant round trip and a
+second render.
+
 ### Trust boundaries
 
 - Imported JSON is untrusted. It goes through `normalizeImport` in

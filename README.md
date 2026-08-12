@@ -20,6 +20,8 @@ server, no account, and no analytics, and makes no network requests of its own.
   from the group page. Tabs are opened one by one, so one bad URL cannot fail
   the whole restore.
 - **Search** — filter across group names, tab titles and URLs.
+- **Live updates** — the popup and any open group page stay in sync with each
+  other; renaming or deleting in one shows up in the other immediately.
 - **Import / export** — JSON files, including the flat `[{title, url}]` format
   written by earlier versions of this extension.
 
@@ -132,7 +134,6 @@ disclosures and the assets still to produce — is in
 
 - [ ] Store assets: screenshots and the 440×280 promo tile
 - [ ] Keyboard shortcut and context-menu entry
-- [ ] Live popup refresh via `chrome.storage.onChanged`
 - [ ] Firefox and Edge builds
 
 ---
